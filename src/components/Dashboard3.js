@@ -11,7 +11,6 @@ import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { Autocomplete, Button, Container, TextField } from "@mui/material";
 import Teble from "./Teble";
 import { BarChart, PieChart } from "@mui/x-charts";
-import { database } from "./server/firebase";
 import { getDatabase, ref, onValue } from "firebase/database";
 import {
   LineChart,
@@ -22,6 +21,8 @@ import {
   Tooltip,
   Legend,
 } from "recharts";
+import { database } from "./server/firebase";
+
 const Item = styled(Paper)(({ theme }) => ({
   backgroundColor: "#fff",
   ...theme.typography.body2,
@@ -44,95 +45,135 @@ function Dashboard3(props) {
   const [filteredPlates, setFilteredPlates] = useState([]); // รายการทะเบียนที่กรองตามวันที่
   const [selectedCustomer, setSelectedCustomer] = useState(""); // ลูกค้าที่เลือก
   const [filteredCustomers, setFilteredCustomers] = useState([]); // รายการลูกค้าที่กรองตามวันที่
-  const [padding, setPending] = useState(0);
-  const [boardingstatus, setBoardingstatus] = useState(0);
-  const [cancelled, setCancelled] = useState(0);
   const [monthlyTrips, setMonthlyTrips] = useState(0);
   const [tripCount, setTripCount] = useState(0);
-
+  const [f_wait, setF_wait] = useState(0);
+  const [f_cancel, setF_cancel] = useState(0);
+  const [tripCount1, setTripCount1] = useState(0);
+  const [tripCount2, setTripCount2] = useState(0);
 
   console.log("Seller (Logged in): ", seller);
 
   // ดึงข้อมูลสำหรับ Seller
   const getSeller = async (start, end, plate, customer) => {
     if (!start || !end) return;
-  
-    const database = getDatabase();
+
+    // const database = getDatabase();
     const orderRef = ref(database, "/order");
     const operationRef = ref(database, "/operation");
-  
+
     onValue(orderRef, (snapshot) => {
       const datas = snapshot.val();
-      console.log("datas : ",datas.length);
-      console.log("seller : ",seller.toString());
+      console.log("datas : ", datas.length);
+      console.log("seller : ", seller.toString());
       const dataList = [];
+      const data1 = [];
+      const data2 = [];
       const plateList = new Set();
       const customerList = new Set();
       let volumeSum = 0;
-  
+
       // ดึงข้อมูล order
       for (let id in datas) {
         const orderDate = dayjs(datas[id]?.date, "DD/MM/YYYY");
-  
+
         if (
-          datas[id]?.orderseller === seller.toString() 
-          && datas[id].orderstatus === "นำส่งสำเร็จ"
-          &&
+          datas[id]?.orderseller === seller.toString() &&
           orderDate.isBetween(start, end, null, "[]") &&
           (plate === "" || datas[id]?.truck === plate) &&
           (customer === "" || datas[id]?.customer === customer)
         ) {
-          dataList.push({ id, ...datas[id] });
-  
+          if (datas[id].orderstatus === "นำส่งสำเร็จ") {
+            dataList.push({ id, ...datas[id] });
+          } else if (datas[id].orderstatus === "รอจัดขึ้นรถ") {
+            data1.push({ id, ...datas[id] });
+          }
+          if (datas[id].orderstatus === "ยกเลิก") {
+            data2.push({ id, ...datas[id] });
+          }
+
           if (datas[id]?.truck) plateList.add(datas[id].truck);
           if (datas[id]?.customer) customerList.add(datas[id].customer);
           volumeSum += parseFloat(datas[id]?.volume || 0);
         }
       }
 
-      console.log("showdataList: ",dataList.length);
-  
+      console.log("showdataList: ", dataList.length);
+
       // ตรวจสอบ operation และนับจำนวนเที่ยวที่ตรงกับ order
       onValue(operationRef, (operationSnapshot) => {
         const operationData = operationSnapshot.val();
         // let tripCount = 0;
         const matchingOperations = []; // Array สำหรับเก็บ ID ของ operation ที่ตรงกัน
+        const matchingOperations1 = []; // Array สำหรับเก็บ ID ของ operation ที่ตรงกัน
+        const matchingOperations2 = []; // Array สำหรับเก็บ ID ของ operation ที่ตรงกัน
         for (let operationId in operationData) {
-          if(operationData[operationId].status === "จบทริป"){
-          const operation = operationData[operationId];
-  
-          // ตรวจสอบฟิลด์ CH1 ถึง CH8
-          for (let i = 1; i <= 8; i++) {
-            const chField = `CH${i}`;
-            if (operation[chField] && dataList.some((order) => order.id === operation[chField])) {
-              matchingOperations.push(operationId); // บันทึก ID ของ operation ที่ตรงกัน
-              break; // ไม่ต้องตรวจซ้ำใน operation เดียวกัน
+          if (operationData[operationId].status === "จบทริป") {
+            const operation = operationData[operationId];
+            // ตรวจสอบฟิลด์ CH1 ถึง CH8
+            for (let i = 1; i <= 8; i++) {
+              const chField = `CH${i}`;
+              if (
+                operation[chField] &&
+                dataList.some((order) => order.id === operation[chField])
+              ) {
+                matchingOperations.push(operationId); // บันทึก ID ของ operation ที่ตรงกัน
+                break; // ไม่ต้องตรวจซ้ำใน operation เดียวกัน
+              }
+            }
+          } else if (operationData[operationId].status === "รออนุมัติ") {
+            const operation = operationData[operationId];
+            // ตรวจสอบฟิลด์ CH1 ถึง CH8
+            for (let i = 1; i <= 8; i++) {
+              const chField = `CH${i}`;
+              if (
+                operation[chField] &&
+                dataList.some((order) => order.id === operation[chField])
+              ) {
+                matchingOperations1.push(operationId); // บันทึก ID ของ operation ที่ตรงกัน
+                break; // ไม่ต้องตรวจซ้ำใน operation เดียวกัน
+              }
+            }
+          }
+          if (operationData[operationId].status === "อนุมัติ") {
+            const operation = operationData[operationId];
+            // ตรวจสอบฟิลด์ CH1 ถึง CH8
+            for (let i = 1; i <= 8; i++) {
+              const chField = `CH${i}`;
+              if (
+                operation[chField] &&
+                dataList.some((order) => order.id === operation[chField])
+              ) {
+                matchingOperations2.push(operationId); // บันทึก ID ของ operation ที่ตรงกัน
+                break; // ไม่ต้องตรวจซ้ำใน operation เดียวกัน
+              }
             }
           }
         }
-      }
         console.log("Matching Operations:", matchingOperations.length);
         // ตั้งค่าข้อมูล state
+        setF_cancel(data2.length);
+        setF_wait(data1.length);
         setsellernumber(dataList.length); // จำนวนออร์เดอร์
         setTotalVolume(volumeSum); // ปริมาณรวม
         setFilteredPlates([...plateList]); // รายการทะเบียนรถ
         setFilteredCustomers([...customerList]); // รายชื่อลูกค้า
         setTripCount(matchingOperations.length); // จำนวนเที่ยวที่ตรวจสอบได้
+        setTripCount1(matchingOperations1.length); // จำนวนเที่ยวที่ตรวจสอบได้
+        setTripCount2(matchingOperations2.length); // จำนวนเที่ยวที่ตรวจสอบได้
       });
     });
   };
-  
-
 
   useEffect(() => {
     const db = getDatabase();
-    const tripsRef = ref(db, "/order");
-  
+    const tripsRef = ref(database, "/order");
+
     onValue(tripsRef, (snapshot) => {
       const data = snapshot.val();
       if (data) {
         const monthlyData = Array(12).fill(0);
-  
+
         // กรองข้อมูลตาม seller, selectedPlate และ selectedCustomer
         const filteredData = Object.values(data).filter(
           (item) =>
@@ -140,13 +181,13 @@ function Dashboard3(props) {
             (selectedPlate ? item.truck.includes(selectedPlate) : true) && // กรองตามทะเบียนรถ (ถ้ามี)
             (selectedCustomer ? item.customer === selectedCustomer : true) // กรองตามลูกค้า (ถ้ามี)
         );
-  
+
         // รวมจำนวนเที่ยวต่อเดือน
         filteredData.forEach((trip) => {
           const tripMonth = new Date(trip.date).getMonth(); // ดึงเดือนจากวันที่
           monthlyData[tripMonth] += 1;
         });
-  
+
         // จัดรูปแบบข้อมูลกราฟ
         const formattedData = monthlyData.map((value, index) => ({
           month: [
@@ -165,13 +206,11 @@ function Dashboard3(props) {
           ][index],
           trips: value,
         }));
-  
+
         setMonthlyTrips(formattedData); // อัปเดตข้อมูลกราฟ
       }
     });
   }, [seller, selectedPlate, selectedCustomer]); // เพิ่ม selectedCustomer เป็น dependency
-  
-  
 
   // ดึงข้อมูล Seller เมื่อมีการเปลี่ยนแปลงของวันที่หรือเงื่อนไข
   useEffect(() => {
@@ -179,34 +218,6 @@ function Dashboard3(props) {
       getSeller(startDate, endDate, selectedPlate, selectedCustomer);
     }
   }, [startDate, endDate, selectedPlate, selectedCustomer]);
-
-  const getPending = async () => {
-    database.ref("/order").on("value", (snapshot) => {
-      const datas = snapshot.val();
-      const dataPending = [];
-      const dataBoardingstatus = [];
-      const dataCancelled = []; // ตัวแปรสำหรับเก็บข้อมูลสถานะ "ยกเลิก"
-  
-      for (let id in datas) {
-        if (datas[id].orderstatus === "นำส่งสำเร็จ") {
-          dataPending.push({ id, ...datas[id] });
-        } else if (datas[id].orderstatus === "ยกเลิก") {
-          dataCancelled.push({ id, ...datas[id] }); // เก็บข้อมูลที่สถานะเป็น "ยกเลิก"
-        } else {
-          dataBoardingstatus.push({ id, ...datas[id] });
-        }
-      }
-  
-      setPending(dataPending.length); // จำนวนสถานะ "นำส่งสำเร็จ"
-      setBoardingstatus(dataBoardingstatus.length); // จำนวนสถานะอื่น ๆ
-      setCancelled(dataCancelled.length); // จำนวนสถานะ "ยกเลิก"
-    });
-  };
-  
-  useEffect(() => {
-    getPending();
-  }, []);
-
 
   return (
     <Container maxWidth="xl">
@@ -280,27 +291,29 @@ function Dashboard3(props) {
                   </Paper>
                 </Grid>
 
-               {/* เลือกทะเบียน */}
-      <Grid item xs={3} margin={2} marginLeft={-3}>
-        <Paper component="form">
-          <Autocomplete
-            options={filteredPlates}
-            getOptionLabel={(option) => (option === "" ? "ทั้งหมด" : option)}
-            value={selectedPlate}
-            onChange={(event, newValue) => {
-              setSelectedPlate(newValue || "");
-            }}
-            renderInput={(params) => (
-              <TextField
-                {...params}
-                label="เลือกทะเบียน"
-                size="small"
-                fullWidth
-              />
-            )}
-          />
-        </Paper>
-      </Grid>
+                {/* เลือกทะเบียน */}
+                <Grid item xs={3} margin={2} marginLeft={-3}>
+                  <Paper component="form">
+                    <Autocomplete
+                      options={filteredPlates}
+                      getOptionLabel={(option) =>
+                        option === "" ? "ทั้งหมด" : option
+                      }
+                      value={selectedPlate}
+                      onChange={(event, newValue) => {
+                        setSelectedPlate(newValue || "");
+                      }}
+                      renderInput={(params) => (
+                        <TextField
+                          {...params}
+                          label="เลือกทะเบียน"
+                          size="small"
+                          fullWidth
+                        />
+                      )}
+                    />
+                  </Paper>
+                </Grid>
                 <Grid item xs={2.6} margin={2} marginLeft={-3}>
                   <Paper component="form">
                     <Autocomplete
@@ -324,7 +337,7 @@ function Dashboard3(props) {
                   </Paper>
                 </Grid>
                 <Grid container spacing={3} marginLeft={4}>
-                <Grid item xs={3.5}>
+                  <Grid item xs={3.5}>
                     <Item
                       sx={{
                         height: 60,
@@ -456,14 +469,19 @@ function Dashboard3(props) {
                             {
                               data: [
                                 {
-                                  id: "ว่าง",
-                                  color: "#FF8000",
-                                  value: 5,
+                                  id: "จบทริป",
+                                  color: "#5CB338",
+                                  value: tripCount,
                                 },
                                 {
-                                  id: "มีสินค้า",
+                                  id: "อนุมัติ",
                                   color: "#6EC207",
-                                  value: 3,
+                                  value: tripCount2,
+                                },
+                                {
+                                  id: "รออนุมัติ",
+                                  color: "#FF8000",
+                                  value: tripCount1,
                                 },
                               ],
                               type: "pie",
@@ -492,7 +510,7 @@ function Dashboard3(props) {
                           color="#000000"
                           fontSize={12}
                         >
-                          ว่าง
+                          รออนุมัติ
                         </Typography>
                         <Box
                           width={15}
@@ -508,7 +526,23 @@ function Dashboard3(props) {
                           color="#000000"
                           fontSize={12}
                         >
-                          มีสินค้า
+                          อนุมัติ
+                        </Typography>
+                        <Box
+                          width={15}
+                          height={15}
+                          sx={{
+                            backgroundColor: "#5CB338",
+                            marginRight: 1,
+                            marginTop: -8,
+                          }}
+                        />
+                        <Typography
+                          marginTop={-8}
+                          color="#000000"
+                          fontSize={12}
+                        >
+                          จบทริป
                         </Typography>
                       </Box>
                     </Item>
@@ -529,7 +563,7 @@ function Dashboard3(props) {
                         ]}
                         series={[
                           {
-                            data: [sellernumber,],
+                            data: [sellernumber],
                             stack: "A",
                             color: "#009688",
                           },
@@ -559,17 +593,17 @@ function Dashboard3(props) {
                                 {
                                   id: "รอจัดขึ้นรถ",
                                   color: "#FF8000",
-                                  value: boardingstatus,
+                                  value: sellernumber,
                                 },
                                 {
                                   id: "ยกเลิก",
                                   color: "#FF2929",
-                                  value: cancelled,
+                                  value: f_wait,
                                 },
                                 {
                                   id: "นำส่งสำเร็จ",
                                   color: "#6EC207",
-                                  value: padding,
+                                  value: f_cancel,
                                 },
                               ],
                               type: "pie",
@@ -666,36 +700,36 @@ function Dashboard3(props) {
                     กราฟเเสดงจำนวนเที่ยว
                   </Typography>
                   <Item sx={{ margin: 5, marginTop: -2 }}>
-        <LineChart
-          width={1090}
-          height={500}
-          data={monthlyTrips}
-          margin={{ top: 50, right: 30, left: 20, bottom: 5 }}
-        >
-          <CartesianGrid strokeDasharray="3 3" />
-          <XAxis dataKey="month" fontSize={13} />
-          <YAxis fontSize={13} />
-          <Tooltip />
-          <Legend />
-          <Line
-            type="monotone"
-            dataKey="trips"
-            stroke="#131010"
-            activeDot={{ r: 10 }}
-            label={({ x, y, value }) => (
-              <text
-                x={x}
-                y={y - 10}
-                fill="black"
-                textAnchor="middle"
-                fontSize={15}
-              >
-                {value}
-              </text>
-            )}
-          />
-        </LineChart>
-      </Item>
+                    <LineChart
+                      width={1090}
+                      height={500}
+                      data={monthlyTrips}
+                      margin={{ top: 50, right: 30, left: 20, bottom: 5 }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="month" fontSize={13} />
+                      <YAxis fontSize={13} />
+                      <Tooltip />
+                      <Legend />
+                      <Line
+                        type="monotone"
+                        dataKey="trips"
+                        stroke="#131010"
+                        activeDot={{ r: 10 }}
+                        label={({ x, y, value }) => (
+                          <text
+                            x={x}
+                            y={y - 10}
+                            fill="black"
+                            textAnchor="middle"
+                            fontSize={15}
+                          >
+                            {value}
+                          </text>
+                        )}
+                      />
+                    </LineChart>
+                  </Item>
                 </Grid>
                 <Grid>.</Grid>
               </Paper>

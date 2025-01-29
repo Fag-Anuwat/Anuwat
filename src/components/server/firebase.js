@@ -4,7 +4,7 @@ import { getAuth, GoogleAuthProvider } from 'firebase/auth';
 import { initializeApp } from 'firebase/app';
 
 const firebaseConfig = {
-    apiKey: "AIzaSyDUgLrgvUOgpWlBAUo-u_Da9jE34MWBDSk",
+  apiKey: "AIzaSyDUgLrgvUOgpWlBAUo-u_Da9jE34MWBDSk",
   authDomain: "anuwat-cf0af.firebaseapp.com",
   databaseURL: "https://anuwat-cf0af-default-rtdb.asia-southeast1.firebasedatabase.app",
   projectId: "anuwat-cf0af",

@@ -29,6 +29,7 @@ import {
   Tooltip,
   Legend,
 } from "recharts";
+import { database } from "./server/firebase";
 
 const Item = styled(Paper)(({ theme }) => ({
   backgroundColor: "#fff",
@@ -96,7 +97,7 @@ function Dashboard() {
  // ดึงข้อมูลทะเบียนรถทั้งหมดจาก Firebase
  useEffect(() => {
   const db = getDatabase();
-  const vehicleRef = ref(db, "/primarydata/truck");
+  const vehicleRef = ref(database, "/primarydata/truck");
 
   onValue(vehicleRef, (snapshot) => {
     const data = snapshot.val();
@@ -114,7 +115,7 @@ const fetchData = (start, end, vehicle) => {
   if (!start || !end) return;
 
   const db = getDatabase();
-  const tripsRef = ref(db, "/operation");
+  const tripsRef = ref(database, "/operation");
 
   onValue(tripsRef, (snapshot) => {
     const datas = snapshot.val();
@@ -159,7 +160,7 @@ const fetchData = (start, end, vehicle) => {
   });
 
   // ดึงข้อมูลออเดอร์
-  const orderRef = ref(db, "/order");
+  const orderRef = ref(database, "/order");
   onValue(orderRef, (snapshot) => {
     const datas = snapshot.val();
     const dataOrder = [];
@@ -250,7 +251,7 @@ const fetchData = (start, end, vehicle) => {
 // ดึงข้อมูลรายเดือนสำหรับ Recharts
 useEffect(() => {
   const db = getDatabase();
-  const tripsRef = ref(db, "/operation");
+  const tripsRef = ref(database, "/operation");
 
   onValue(tripsRef, (snapshot) => {
     const data = snapshot.val();
