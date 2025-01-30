@@ -228,8 +228,8 @@ function Dashboard3(props) {
 
   return (
     <Container maxWidth="xl">
-      <Typography textAlign="center" marginBottom={5} variant="h3">
-        Seller{seller}
+      <Typography textAlign="center" marginBottom={5} variant="h3" fontWeight='bold' >
+        {seller}
         {/* {
           seller.map((row) => (
             row.salename
