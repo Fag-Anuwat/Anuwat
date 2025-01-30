@@ -97,6 +97,23 @@ function Dashboard() {
   const [xAxisLabels, setXAxisLabels] = useState([]);
   const [xAxisDataKey, setXAxisDataKey] = useState([]);
 
+  const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+
+  // ฟังก์ชันเพื่ออัพเดตขนาดหน้าจอเมื่อหน้าจอขยับ
+  useEffect(() => {
+    const handleResize = () => {
+      setWindowWidth(window.innerWidth);
+    };
+
+    // เพิ่ม event listener เมื่อขนาดหน้าจอเปลี่ยน
+    window.addEventListener('resize', handleResize);
+
+    // ลบ event listener เมื่อ component ถูกทำลาย
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
+  }, []);
+
   // ดึงข้อมูลทะเบียนรถทั้งหมดจาก Firebase
   useEffect(() => {
     const db = getDatabase();
@@ -569,8 +586,9 @@ function Dashboard() {
   return (
     <Container maxWidth="xl">
       <Box p={3}>
-        <Box sx={{ textAlign: "center", marginTop: -44, marginBottom: -10 }}>
-          <img src={Logo} alt="Logo" style={{ width: "350px" }} />
+        <Box sx={{ display:"flex", justifyContent: "left", alignItems:"center" , marginTop: -35, marginBottom: 17 }}>
+          <img src={Logo} alt="Logo" style={{ width: "150px" }} />
+          <Typography variant="h1" fontWeight="bold" color="red" gutterBottom >Happy Oil Group</Typography>
         </Box>
         <Grid container spacing={2} marginBottom={3} marginLeft={-3.6}>
           <Grid item xs={1.6}>
@@ -1063,12 +1081,12 @@ function Dashboard() {
           <Typography variant="h5" textAlign="center" marginTop={3}>
             กราฟเเสดงจำนวนเที่ยว
           </Typography>
-          <Item sx={{ margin: 5, marginTop: 2 }}>
+          <Item sx={{ width: "100%" }}>
             <ComposedChart
-              width={1300}
+              width={windowWidth-80}
               height={500}
               data={monthlyTrips}
-              margin={{ top: 50, left: -40, bottom: 5 }}
+              margin={{ top: 50, right: 40, left: -40, bottom: 5 }}
             >
               <CartesianGrid strokeDasharray="3 3" />
 

@@ -4,14 +4,14 @@ import { getAuth, GoogleAuthProvider } from 'firebase/auth';
 import { initializeApp } from 'firebase/app';
 
 const firebaseConfig = {
-  apiKey: "AIzaSyDUgLrgvUOgpWlBAUo-u_Da9jE34MWBDSk",
-  authDomain: "anuwat-cf0af.firebaseapp.com",
-  databaseURL: "https://anuwat-cf0af-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "anuwat-cf0af",
-  storageBucket: "anuwat-cf0af.firebasestorage.app",
-  messagingSenderId: "380507856082",
-  appId: "1:380507856082:web:f517c5552abd8ef3de610b",
-  measurementId: "G-L40Y3JPXFY"
+  apiKey: "AIzaSyCPs5CW5knVlnXLo4fA5Ig3DavQRzFYPlA",
+  authDomain: "scd2-925b7.firebaseapp.com",
+  databaseURL: "https://scd2-925b7-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "scd2-925b7",
+  storageBucket: "scd2-925b7.firebasestorage.app",
+  messagingSenderId: "724863961788",
+  appId: "1:724863961788:web:6190a3d1a1d8314cf1deb9",
+  measurementId: "G-780RFTJ4Y1"
 };
 
   if (!firebase.apps.length) {
