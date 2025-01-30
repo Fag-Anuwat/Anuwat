@@ -51,7 +51,7 @@ function App() {
     <Container maxWidth="xl">
       {show === 0 ? (
         <>
-          <Grid container spacing={2}>
+          <Grid container spacing={2} marginTop={30}>
             <Grid item xs={8}></Grid>
             <Grid
               item

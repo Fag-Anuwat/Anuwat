@@ -12,16 +12,17 @@ import { Autocomplete, Button, Container, TextField } from "@mui/material";
 import Teble from "./Teble";
 import { BarChart, PieChart } from "@mui/x-charts";
 import { getDatabase, ref, onValue } from "firebase/database";
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-} from "recharts";
+// import {
+//   LineChart,
+//   Line,
+//   XAxis,
+//   YAxis,
+//   CartesianGrid,
+//   Tooltip,
+//   Legend,
+// } from "recharts";
 import { database } from "./server/firebase";
+import { Cancel } from "@mui/icons-material";
 
 const Item = styled(Paper)(({ theme }) => ({
   backgroundColor: "#fff",
@@ -45,7 +46,7 @@ function Dashboard3(props) {
   const [filteredPlates, setFilteredPlates] = useState([]); // รายการทะเบียนที่กรองตามวันที่
   const [selectedCustomer, setSelectedCustomer] = useState(""); // ลูกค้าที่เลือก
   const [filteredCustomers, setFilteredCustomers] = useState([]); // รายการลูกค้าที่กรองตามวันที่
-  const [monthlyTrips, setMonthlyTrips] = useState(0);
+  // const [monthlyTrips, setMonthlyTrips] = useState(0);
   const [tripCount, setTripCount] = useState(0);
   const [f_wait, setF_wait] = useState(0);
   const [f_cancel, setF_cancel] = useState(0);
@@ -165,52 +166,58 @@ function Dashboard3(props) {
     });
   };
 
-  useEffect(() => {
-    const db = getDatabase();
-    const tripsRef = ref(database, "/order");
+  // useEffect(() => {
+  //   const database = getDatabase();
+  //   const tripsRef = ref(database, "/operation");
 
-    onValue(tripsRef, (snapshot) => {
-      const data = snapshot.val();
-      if (data) {
-        const monthlyData = Array(12).fill(0);
+  //   onValue(tripsRef, (snapshot) => {
+  //     const data = snapshot.val();
+  //     if (data) {
+  //       const monthlyData = Array(12).fill(0);
 
-        // กรองข้อมูลตาม seller, selectedPlate และ selectedCustomer
-        const filteredData = Object.values(data).filter(
-          (item) =>
-            item.orderseller === seller.toString() && // กรองตาม seller
-            (selectedPlate ? item.truck.includes(selectedPlate) : true) && // กรองตามทะเบียนรถ (ถ้ามี)
-            (selectedCustomer ? item.customer === selectedCustomer : true) // กรองตามลูกค้า (ถ้ามี)
-        );
+  //       // ดึงรายการ order ที่ผ่านการกรองมาใช้งาน
+  //       const dataList = []; // ควรอัปเดต dataList จากฟังก์ชัน getSeller() หรือแหล่งข้อมูลที่ตรงกัน
 
-        // รวมจำนวนเที่ยวต่อเดือน
-        filteredData.forEach((trip) => {
-          const tripMonth = new Date(trip.date).getMonth(); // ดึงเดือนจากวันที่
-          monthlyData[tripMonth] += 1;
-        });
+  //       // กรองข้อมูล operation ตาม seller, selectedPlate, selectedCustomer และต้องตรวจสอบ CH1-CH8
+  //       const filteredData = Object.values(data).filter((operation) => {
+  //         // ตรวจสอบเงื่อนไขเบื้องต้น
+  //         const isMatchingSeller = operation.orderseller === seller.toString();
+  //         const isMatchingPlate = selectedPlate ? operation.truck.includes(selectedPlate) : true;
+  //         const isMatchingCustomer = selectedCustomer ? operation.customer === selectedCustomer : true;
 
-        // จัดรูปแบบข้อมูลกราฟ
-        const formattedData = monthlyData.map((value, index) => ({
-          month: [
-            "ม.ค.",
-            "ก.พ.",
-            "มี.ค.",
-            "เม.ย.",
-            "พ.ค.",
-            "มิ.ย.",
-            "ก.ค.",
-            "ส.ค.",
-            "ก.ย.",
-            "ต.ค.",
-            "พ.ย.",
-            "ธ.ค.",
-          ][index],
-          trips: value,
-        }));
+  //         // ตรวจสอบว่ามี Order ID ใน CH1 - CH8 ที่ตรงกับ dataList หรือไม่
+  //         const isMatchingOrder = (() => {
+  //           for (let i = 1; i <= 8; i++) {
+  //             const chField = `CH${i}`;
+  //             if (operation[chField] && dataList.some((order) => order.id === operation[chField])) {
+  //               return true;
+  //             }
+  //           }
+  //           return false;
+  //         })();
 
-        setMonthlyTrips(formattedData); // อัปเดตข้อมูลกราฟ
-      }
-    });
-  }, [seller, selectedPlate, selectedCustomer]); // เพิ่ม selectedCustomer เป็น dependency
+  //         return isMatchingSeller && isMatchingPlate && isMatchingCustomer && isMatchingOrder;
+  //       });
+
+  //       // รวมจำนวนเที่ยวต่อเดือน
+  //       filteredData.forEach((trip) => {
+  //         const tripMonth = new Date(trip.date).getMonth(); // ดึงเดือนจากวันที่
+  //         monthlyData[tripMonth] += 1;
+  //       });
+
+  //       // จัดรูปแบบข้อมูลกราฟ
+  //       const formattedData = monthlyData.map((value, index) => ({
+  //         month: [
+  //           "ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.",
+  //           "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค.",
+  //         ][index],
+  //         trips: value,
+  //       }));
+
+  //       setMonthlyTrips(formattedData); // อัปเดตข้อมูลกราฟ
+  //     }
+  //   });
+  // }, [seller, selectedPlate, selectedCustomer]); // Include seller as dependency
 
   // ดึงข้อมูล Seller เมื่อมีการเปลี่ยนแปลงของวันที่หรือเงื่อนไข
   useEffect(() => {
@@ -361,9 +368,9 @@ function Dashboard3(props) {
                         <Typography variant="subtitle1" gutterBottom>
                           จำนวนเที่ยว
                         </Typography>
-                        <Typography variant="h5" gutterBottom>
+                        {/* <Typography variant="h5" gutterBottom>
                           วันนี้
-                        </Typography>
+                        </Typography> */}
                       </Box>
                       <Typography
                         sx={{
@@ -398,9 +405,9 @@ function Dashboard3(props) {
                         <Typography variant="subtitle1" gutterBottom>
                           จำนวนออเดอร์
                         </Typography>
-                        <Typography variant="h5" gutterBottom>
+                        {/* <Typography variant="h5" gutterBottom>
                           วันนี้
-                        </Typography>
+                        </Typography> */}
                       </Box>
                       <Typography
                         sx={{
@@ -435,9 +442,9 @@ function Dashboard3(props) {
                         <Typography variant="subtitle1" gutterBottom>
                           ปริมาณ
                         </Typography>
-                        <Typography variant="h5" gutterBottom>
+                        {/* <Typography variant="h5" gutterBottom>
                           วันนี้
-                        </Typography>
+                        </Typography> */}
                       </Box>
                       <Typography
                         sx={{
@@ -450,8 +457,8 @@ function Dashboard3(props) {
                   </Grid>
                 </Grid>
               </Grid>
-              <Paper sx={{ margin: 3, backgroundColor: "lightgrey" }}>
-                <Typography variant="h5" textAlign="center" padding={3}>
+              <Paper sx={{ margin: 3, backgroundColor: "lightgrey",p:3 }}>
+                <Typography variant="h5" textAlign="center">
                   กราฟเเสดงข้อมูล
                 </Typography>
                 <Grid container spacing={5} marginTop={-9}>
@@ -470,17 +477,17 @@ function Dashboard3(props) {
                               data: [
                                 {
                                   id: "จบทริป",
-                                  color: "#5CB338",
+                                  color: "#52b202",
                                   value: tripCount,
                                 },
                                 {
                                   id: "อนุมัติ",
-                                  color: "#6EC207",
+                                  color: "#2979ff",
                                   value: tripCount2,
                                 },
                                 {
                                   id: "รออนุมัติ",
-                                  color: "#FF8000",
+                                  color: "#ffea00",
                                   value: tripCount1,
                                 },
                               ],
@@ -499,14 +506,14 @@ function Dashboard3(props) {
                           width={15}
                           height={15}
                           sx={{
-                            backgroundColor: "#FF8000",
+                            backgroundColor: "#ffea00",
                             marginRight: 1,
                             marginTop: -8,
                           }}
                         />
                         <Typography
                           marginTop={-8}
-                          marginRight={3}
+                          marginRight={1}
                           color="#000000"
                           fontSize={12}
                         >
@@ -516,13 +523,14 @@ function Dashboard3(props) {
                           width={15}
                           height={15}
                           sx={{
-                            backgroundColor: "#6EC207",
+                            backgroundColor: "#2979ff",
                             marginRight: 1,
                             marginTop: -8,
                           }}
                         />
                         <Typography
                           marginTop={-8}
+                          marginRight={1}
                           color="#000000"
                           fontSize={12}
                         >
@@ -532,7 +540,7 @@ function Dashboard3(props) {
                           width={15}
                           height={15}
                           sx={{
-                            backgroundColor: "#5CB338",
+                            backgroundColor: "#52b202",
                             marginRight: 1,
                             marginTop: -8,
                           }}
@@ -563,7 +571,7 @@ function Dashboard3(props) {
                         ]}
                         series={[
                           {
-                            data: [sellernumber],
+                            data: [tripCount, sellernumber],
                             stack: "A",
                             color: "#009688",
                           },
@@ -592,18 +600,18 @@ function Dashboard3(props) {
                               data: [
                                 {
                                   id: "รอจัดขึ้นรถ",
-                                  color: "#FF8000",
-                                  value: sellernumber,
+                                  color: "#ffea00",
+                                  value: f_wait,
                                 },
                                 {
                                   id: "ยกเลิก",
                                   color: "#FF2929",
-                                  value: f_wait,
+                                  value: f_cancel,
                                 },
                                 {
                                   id: "นำส่งสำเร็จ",
-                                  color: "#6EC207",
-                                  value: f_cancel,
+                                  color: "#52b202",
+                                  value: sellernumber,
                                 },
                               ],
                               type: "pie",
@@ -622,7 +630,7 @@ function Dashboard3(props) {
                                 width={15}
                                 height={15}
                                 sx={{
-                                  backgroundColor: "#FF8000",
+                                  backgroundColor: "#ffea00",
                                   marginRight: 1,
                                   marginTop: -8,
                                 }}
@@ -672,7 +680,7 @@ function Dashboard3(props) {
                               width={15}
                               height={15}
                               sx={{
-                                backgroundColor: "#6EC207",
+                                backgroundColor: "#52b202",
                                 marginLeft: -12.8,
                                 marginTop: -3,
                               }}
@@ -691,10 +699,10 @@ function Dashboard3(props) {
                     </Item>
                   </Grid>
                 </Grid>
-                <Grid>.</Grid>
+                
               </Paper>
               <Grid>.</Grid>
-              <Paper sx={{ margin: 2.7, backgroundColor: "lightgrey" }}>
+              {/* <Paper sx={{ margin: 2.7, backgroundColor: "lightgrey" }}>
                 <Grid>
                   <Typography variant="h5" textAlign="center" padding={6}>
                     กราฟเเสดงจำนวนเที่ยว
@@ -732,7 +740,7 @@ function Dashboard3(props) {
                   </Item>
                 </Grid>
                 <Grid>.</Grid>
-              </Paper>
+              </Paper> */}
             </Box>
           </>
         )}

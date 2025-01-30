@@ -18,18 +18,19 @@ import {
   // Select,.
   TextField,
 } from "@mui/material";
-import Logo from "../img/Remove-bg.ai_1733451398953.png";
+import Logo from "../img/Logo.jpg";
 import { getDatabase, onValue, ref } from "firebase/database";
 import {
-  LineChart,
+  // LineChart,
   Line,
   XAxis,
   YAxis,
   CartesianGrid,
-  Tooltip,
-  Legend,
+  // Tooltip,
+  // Legend,
+  Area,
+  ComposedChart,
 } from "recharts";
-import { database } from "./server/firebase";
 
 const Item = styled(Paper)(({ theme }) => ({
   backgroundColor: "#fff",
@@ -93,111 +94,115 @@ function Dashboard() {
   const [o_wait, setO_wait] = useState(0);
   const [o_succeed, setO_succeed] = useState(0);
   const [o_trip, setO_trip] = useState(0);
+  const [xAxisLabels, setXAxisLabels] = useState([]);
+  const [xAxisDataKey, setXAxisDataKey] = useState([]);
 
- // ดึงข้อมูลทะเบียนรถทั้งหมดจาก Firebase
- useEffect(() => {
-  const db = getDatabase();
-  const vehicleRef = ref(database, "/primarydata/truck");
+  // ดึงข้อมูลทะเบียนรถทั้งหมดจาก Firebase
+  useEffect(() => {
+    const db = getDatabase();
+    const vehicleRef = ref(db, "/primarydata/truck");
 
-  onValue(vehicleRef, (snapshot) => {
-    const data = snapshot.val();
-    if (data) {
-      const vehicleList = [
-        ...new Set(Object.values(data).map((item) => item.ทะเบียนหัว)),
-      ];
-      setVehicles(vehicleList);
-    }
-  });
-}, []);
+    onValue(vehicleRef, (snapshot) => {
+      const data = snapshot.val();
+      if (data) {
+        const vehicleList = [
+          ...new Set(Object.values(data).map((item) => item.ทะเบียนหัว)),
+        ];
+        setVehicles(vehicleList);
+      }
+    });
+  }, []);
 
-// ดึงข้อมูลและกรองตามวันที่และทะเบียนรถ
-const fetchData = (start, end, vehicle) => {
-  if (!start || !end) return;
+  // ดึงข้อมูลและกรองตามวันที่และทะเบียนรถ
+  const fetchData = (start, end, vehicle) => {
+    if (!start || !end) return;
 
-  const db = getDatabase();
-  const tripsRef = ref(database, "/operation");
+    const db = getDatabase();
+    const tripsRef = ref(db, "/operation");
 
-  onValue(tripsRef, (snapshot) => {
-    const datas = snapshot.val();
-    const statusa = [];
-    const statuss = [];
-    const statusd = [];
-    const dataTrips = [];
-    const vehicleSet = new Set();
-    let totalVolume = 0;
+    onValue(tripsRef, (snapshot) => {
+      const datas = snapshot.val();
+      const statusa = [];
+      const statuss = [];
+      const statusd = [];
+      const dataTrips = [];
+      const vehicleSet = new Set();
+      let totalVolume = 0;
 
+      for (let id in datas) {
+        const tripDate = dayjs(datas[id].date, "DD/MM/YYYY");
+        if (
+          tripDate.isBetween(start, end, null, "[]") &&
+          (vehicle === "" || datas[id].truck.split(":")[1] === vehicle)
+        ) {
+          dataTrips.push({ id, ...datas[id] });
 
-    for (let id in datas) {
-      const tripDate = dayjs(datas[id].date, "DD/MM/YYYY");
-      if (
-        tripDate.isBetween(start, end, null, "[]") &&
-        (vehicle === "" || datas[id].truck.split(":")[1] === vehicle)
-      ) {
-        dataTrips.push({ id, ...datas[id] })
+          if (datas[id].status === "รออนุมัติ") {
+            statusa.push({ id, ...datas[id] });
+          } else if (datas[id].status === "อนุมัติ") {
+            statuss.push({ id, ...datas[id] });
+          } else {
+            statusd.push({ id, ...datas[id] });
+          }
 
-        if (datas[id].status === "รออนุมัติ"){
-          statusa.push({ id, ...datas[id] })
-        } else if (datas[id].status === "อนุมัติ"){
-          statuss.push({ id, ...datas[id] })
-        } else {
-          statusd.push({ id, ...datas[id] })
+          // เก็บทะเบียนรถ
+          const tripVehicle = datas[id].truck.split(":")[1];
+          vehicleSet.add(tripVehicle);
+
+          // รวมปริมาณ volume
+          totalVolume += Number(datas[id].sumvolume || 0);
         }
-        
-        // เก็บทะเบียนรถ
-        const tripVehicle = datas[id].truck.split(":")[1];
-        vehicleSet.add(tripVehicle);
-
-        // รวมปริมาณ volume
-        totalVolume += Number(datas[id].sumvolume || 0);
       }
-    }
-    setO_wait(statusa.length);
-    setO_succeed(statuss.length);
-    setO_trip(statusd.length);
-    setTrips(dataTrips.length);
-    setSumVolume(totalVolume);
-    setFilteredVehicles([...vehicleSet]);
-  });
+      setO_wait(statusa.length);
+      setO_succeed(statuss.length);
+      setO_trip(statusd.length);
+      setTrips(dataTrips.length);
+      setSumVolume(totalVolume);
+      setFilteredVehicles([...vehicleSet]);
+    });
 
-  // ดึงข้อมูลออเดอร์
-  const orderRef = ref(database, "/order");
-  onValue(orderRef, (snapshot) => {
-    const datas = snapshot.val();
-    const dataOrder = [];
-    const dataOrderT = [];
-    const dataOrderC = [];
-    const uniqueCustomers = new Set();
-    const uniqueAddresses = new Set();
+    // ดึงข้อมูลออเดอร์
+    const orderRef = ref(db, "/order");
+    onValue(orderRef, (snapshot) => {
+      const datas = snapshot.val();
+      const dataOrder = [];
+      const dataOrderT = [];
+      const dataOrderC = [];
+      const uniqueCustomers = new Set();
+      const uniqueAddresses = new Set();
 
-    for (let id in datas) {
-      const orderDate = dayjs(datas[id].date, "DD/MM/YYYY");
-      if (
-        orderDate.isBetween(start, end, null, "[]") &&
-        (vehicle === "" || datas[id].truck.split(":")[1] === vehicle) 
-      ) {
-        if(datas[id].orderstatus === "นำส่งสำเร็จ"){dataOrder.push({ id, ...datas[id] });}
-        else if(datas[id].orderstatus === "รอจัดขึ้นรถ"){dataOrderT.push({ id, ...datas[id] });}
-        else{dataOrderC.push({ id, ...datas[id] });}
+      for (let id in datas) {
+        const orderDate = dayjs(datas[id].date, "DD/MM/YYYY");
+        if (
+          orderDate.isBetween(start, end, null, "[]") &&
+          (vehicle === "" || datas[id].truck.split(":")[1] === vehicle)
+        ) {
+          if (datas[id].orderstatus === "นำส่งสำเร็จ") {
+            dataOrder.push({ id, ...datas[id] });
+          } else if (datas[id].orderstatus === "รอจัดขึ้นรถ") {
+            dataOrderT.push({ id, ...datas[id] });
+          } else {
+            dataOrderC.push({ id, ...datas[id] });
+          }
 
-
-        // เก็บลูกค้าและที่อยู่
-        if (datas[id].customer) uniqueCustomers.add(datas[id].customer);
-        if (datas[id].address) uniqueAddresses.add(datas[id].address);
+          // เก็บลูกค้าและที่อยู่
+          if (datas[id].customer) uniqueCustomers.add(datas[id].customer);
+          if (datas[id].address) uniqueAddresses.add(datas[id].address);
+        }
       }
-    }
 
-    console.log("นำส่งสำเร็จ",dataOrder.length);
-    console.log("รอจัดขึ้นรถ",dataOrderT.length);
-    console.log("ยกเลิก",dataOrderC.length);
+      console.log("นำส่งสำเร็จ", dataOrder.length);
+      console.log("รอจัดขึ้นรถ", dataOrderT.length);
+      console.log("ยกเลิก", dataOrderC.length);
 
-    setWait(dataOrderT.length);
-    setCancel(dataOrderC.length);
-    setSucceed(dataOrder.length);
-    setOrder(dataOrder.length);
-    setCustomer(uniqueCustomers.size);
-    setAddressCount(uniqueAddresses.size);
-  });
-};
+      setWait(dataOrderT.length);
+      setCancel(dataOrderC.length);
+      setSucceed(dataOrder.length);
+      setOrder(dataOrder.length);
+      setCustomer(uniqueCustomers.size);
+      setAddressCount(uniqueAddresses.size);
+    });
+  };
 
   // // ดึงข้อมูลสถานะรถ
   // const getStatus = () => {
@@ -248,51 +253,105 @@ const fetchData = (start, end, vehicle) => {
   //   });
   // };
 
-// ดึงข้อมูลรายเดือนสำหรับ Recharts
-useEffect(() => {
-  const db = getDatabase();
-  const tripsRef = ref(database, "/operation");
-
-  onValue(tripsRef, (snapshot) => {
-    const data = snapshot.val();
-    if (data) {
-      const monthlyData = Array(12).fill(0);
-      const filteredData = selectedVehicle
-        ? Object.values(data).filter((item) =>
-            item.truck.includes(selectedVehicle)
-          )
-        : Object.values(data);
-
-      filteredData.forEach((trip) => {
-        const tripMonth = new Date(trip.date).getMonth();
-        monthlyData[tripMonth] += 1;
-      });
-
-      const formattedData = monthlyData.map((value, index) => ({
-        month: [
-          "ม.ค.",
-          "ก.พ.",
-          "มี.ค.",
-          "เม.ย.",
-          "พ.ค.",
-          "มิ.ย.",
-          "ก.ค.",
-          "ส.ค.",
-          "ก.ย.",
-          "ต.ค.",
-          "พ.ย.",
-          "ธ.ค.",
-        ][index],
-        trips: value,
-      }));
-
-      setMonthlyTrips(formattedData);
+  useEffect(() => {
+    if (!startDate || !endDate) {
+      setMonthlyTrips([]);
+      return;
     }
-  });
-}, [selectedVehicle]);
 
+    const db = getDatabase();
+    const tripsRef = ref(db, "/operation");
 
+    onValue(tripsRef, (snapshot) => {
+      const data = snapshot.val();
+      if (data) {
+        const monthlyData = Array(12).fill(0); // ข้อมูลรายเดือน
+        const dailyData = {}; // ข้อมูลรายวัน
 
+        // กรองข้อมูลตามวันที่และทะเบียนรถ
+        const filteredData = Object.values(data).filter((item) => {
+          const orderDate = dayjs(item.date, "DD/MM/YYYY", true);
+          if (!orderDate.isValid()) return false;
+
+          const withinDateRange = orderDate.isBetween(
+            dayjs(startDate),
+            dayjs(endDate),
+            null,
+            "[]"
+          );
+
+          const matchesVehicle = selectedVehicle
+            ? item.truck?.split(":")[1] === selectedVehicle
+            : true;
+
+          return withinDateRange && matchesVehicle;
+        });
+
+        filteredData.forEach((trip) => {
+          const tripDate = dayjs(trip.date, "DD/MM/YYYY", true);
+          if (!tripDate.isValid()) return;
+
+          // ถ้าอยู่ในเดือนเดียวกัน -> รวมตามวันที่
+          const tripDay = tripDate.format("DD/MM"); // ใช้วันที่เต็มในกรณีข้ามเดือน
+          dailyData[tripDay] = (dailyData[tripDay] || 0) + 1;
+
+          // ถ้าข้ามเดือน -> รวมตามเดือน
+          if (dayjs(startDate).month() !== dayjs(endDate).month()) {
+            const tripMonth = tripDate.month();
+            monthlyData[tripMonth] += 1;
+          }
+        });
+
+        let formattedData;
+        let xAxisDataKey;
+        let xAxisLabels;
+
+        // ตรวจสอบระยะเวลาของช่วงวันที่
+        const startMonth = dayjs(startDate).month();
+        const endMonth = dayjs(endDate).month();
+        const monthDifference = endMonth - startMonth;
+
+        const daysDifference = dayjs(endDate).diff(dayjs(startDate), "days");
+
+        if (daysDifference > 31) {
+          // ถ้าช่วงวันที่เกิน 2 เดือน (60 วัน) แสดงเป็นรายเดือน
+          formattedData = monthlyData.map((value, index) => ({
+            month: [
+              "ม.ค.",
+              "ก.พ.",
+              "มี.ค.",
+              "เม.ย.",
+              "พ.ค.",
+              "มิ.ย.",
+              "ก.ค.",
+              "ส.ค.",
+              "ก.ย.",
+              "ต.ค.",
+              "พ.ย.",
+              "ธ.ค.",
+            ][index],
+            trips: value,
+          }));
+          xAxisDataKey = "month"; // Set key as 'month' for monthly data
+          xAxisLabels = formattedData.map((data) => data.month);
+        } else {
+          // ถ้าเป็นช่วงวันที่ไม่เกิน 2 เดือน แสดงเป็นรายวัน
+          formattedData = Object.keys(dailyData).map((date) => ({
+            day: date, // แสดงเป็นวัน (เช่น 25/12/2024, 26/12/2024, ...)
+            trips: dailyData[date],
+          }));
+          xAxisDataKey = "day"; // Set key as 'day' for daily data
+          xAxisLabels = formattedData.map((data) => data.day);
+        }
+
+        setMonthlyTrips(formattedData);
+
+        // Update the X-Axis label dynamically
+        setXAxisLabels(xAxisLabels);
+        setXAxisDataKey(xAxisDataKey);
+      }
+    });
+  }, [selectedVehicle, startDate, endDate]);
   // const [volu, setVolu] = useState(0); // เก็บค่ารวม sumvolume
 
   // useEffect(() => {
@@ -341,7 +400,7 @@ useEffect(() => {
   //     const dataPending = [];
   //     const dataBoardingstatus = [];
   //     const dataCancelled = []; // ตัวแปรสำหรับเก็บข้อมูลสถานะ "ยกเลิก"
-  
+
   //     for (let id in datas) {
   //       if (datas[id].orderstatus === "นำส่งสำเร็จ") {
   //         dataPending.push({ id, ...datas[id] });
@@ -351,17 +410,16 @@ useEffect(() => {
   //         dataBoardingstatus.push({ id, ...datas[id] });
   //       }
   //     }
-  
+
   //     setPending(dataPending.length); // จำนวนสถานะ "นำส่งสำเร็จ"
   //     setBoardingstatus(dataBoardingstatus.length); // จำนวนสถานะอื่น ๆ
   //     setCancelled(dataCancelled.length); // จำนวนสถานะ "ยกเลิก"
   //   });
   // };
-  
+
   // useEffect(() => {
   //   getPending();
   // }, []);
-  
 
   // const [alltp, setAlltp] = useState([]);
 
@@ -377,7 +435,7 @@ useEffect(() => {
   // const getCoot = async () => {
   //   const db = getDatabase();
   //   const refCustomers = ref(db, "/primarydata/customersid");
-  
+
   //   onValue(refCustomers, (snapshot) => {
   //     const datas = snapshot.val();
   //     if (datas) {
@@ -511,7 +569,7 @@ useEffect(() => {
   return (
     <Container maxWidth="xl">
       <Box p={3}>
-        <Box sx={{ textAlign: "center", marginTop: -20, marginBottom: -10, }}>
+        <Box sx={{ textAlign: "center", marginTop: -44, marginBottom: -10 }}>
           <img src={Logo} alt="Logo" style={{ width: "350px" }} />
         </Box>
         <Grid container spacing={2} marginBottom={3} marginLeft={-3.6}>
@@ -543,25 +601,29 @@ useEffect(() => {
               </LocalizationProvider>
             </Paper>
           </Grid>
-          <Grid item xs={1.6}>
+          <Grid item xs={1.9}>
             <Paper component="form">
-            <Autocomplete
-            size="small"
-            fullWidth
-            options={filteredVehicles}
-            getOptionLabel={(option) => option || "ทั้งหมด"}
-            value={selectedVehicle}
-            onChange={(event, newValue) => {
-              setSelectedVehicle(newValue || "");
-              if (startDate && endDate) {
-                fetchData(startDate, endDate, newValue || "");
-              }
-            }}
-            renderInput={(params) => (
-              <TextField {...params} label="เลือกทะเบียนรถ" variant="outlined" />
-            )}
-          />
-        </Paper>
+              <Autocomplete
+                size="small"
+                fullWidth
+                options={filteredVehicles}
+                getOptionLabel={(option) => option || ""}
+                value={selectedVehicle}
+                onChange={(event, newValue) => {
+                  setSelectedVehicle(newValue || "");
+                  if (startDate && endDate) {
+                    fetchData(startDate, endDate, newValue || "");
+                  }
+                }}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label="เลือกทะเบียนรถ"
+                    variant="outlined"
+                  />
+                )}
+              />
+            </Paper>
           </Grid>
         </Grid>
         <Grid container spacing={2.2}>
@@ -699,7 +761,7 @@ useEffect(() => {
                 marginRight={1}
                 paddingTop={2}
               >
-                <Typography variant="subtitle1"gutterBottom>
+                <Typography variant="subtitle1" gutterBottom>
                   ปริมาณ
                 </Typography>
                 {/* <Typography variant="h5" gutterBottom>
@@ -744,15 +806,15 @@ useEffect(() => {
                   fontSize: 50,
                 }}
               >
-               {addressCount}
+                {addressCount}
               </Typography>
             </Item>
           </Grid>
         </Grid>
       </Box>
 
-      <Paper sx={{ margin: 2, backgroundColor: "lightgrey" }}>
-        <Typography variant="h5" textAlign="center" padding={3}>
+      <Paper sx={{ margin: 2, backgroundColor: "lightgrey" , p:3 }}>
+        <Typography variant="h5" textAlign="center">
           กราฟเเสดงข้อมูลทั้งหมด
         </Typography>
         <Grid container spacing={5} marginTop={-9}>
@@ -771,17 +833,17 @@ useEffect(() => {
                       data: [
                         {
                           id: "อนุมัติ",
-                          color: "#FF8000",
+                          color: "#2979ff",
                           value: o_succeed,
                         },
                         {
                           id: "รออนุมัติ",
-                          color: "#6EC207",
+                          color: "#ffea00",
                           value: o_wait,
                         },
                         {
                           id: "จบทริป",
-                          color: "#6EC207",
+                          color: "#52b202",
                           value: o_trip,
                         },
                       ],
@@ -796,30 +858,47 @@ useEffect(() => {
                   width={15}
                   height={15}
                   sx={{
-                    backgroundColor: "#FF8000",
+                    backgroundColor: "#ffea00",
                     marginRight: 1,
                     marginTop: -8,
                   }}
                 />
                 <Typography
                   marginTop={-8}
-                  marginRight={3}
+                  marginRight={1}
                   color="#000000"
                   fontSize={12}
                 >
-                  ว่าง
+                  รออนุมัติ
                 </Typography>
                 <Box
                   width={15}
                   height={15}
                   sx={{
-                    backgroundColor: "#6EC207",
+                    backgroundColor: "#2979ff",
+                    marginRight: 1,
+                    marginTop: -8,
+                  }}
+                />
+                <Typography
+                  marginTop={-8}
+                  marginRight={1}
+                  color="#000000"
+                  fontSize={12}
+                >
+                  อนุมัติ
+                </Typography>
+                <Box
+                  width={15}
+                  height={15}
+                  sx={{
+                    backgroundColor: "#52b202",
                     marginRight: 1,
                     marginTop: -8,
                   }}
                 />
                 <Typography marginTop={-8} color="#000000" fontSize={12}>
-                  มีสินค้า
+                  จบทริป
                 </Typography>
               </Box>
             </Item>
@@ -841,7 +920,7 @@ useEffect(() => {
                 ]}
                 series={[
                   {
-                    data: [trips, order, addressCount],
+                    data: [trips, customer, addressCount],
                     stack: "A",
                     color: "#009688",
                   },
@@ -870,7 +949,7 @@ useEffect(() => {
                       data: [
                         {
                           id: "รอจัดขึ้นรถ",
-                          color: "#FF8000",
+                          color: "#ffea00",
                           value: wait,
                         },
                         {
@@ -880,7 +959,7 @@ useEffect(() => {
                         },
                         {
                           id: "นำส่งสำเร็จ",
-                          color: "#6EC207",
+                          color: "#52b202",
                           value: succeed,
                         },
                       ],
@@ -900,7 +979,7 @@ useEffect(() => {
                         width={15}
                         height={15}
                         sx={{
-                          backgroundColor: "#FF8000",
+                          backgroundColor: "#ffea00",
                           marginRight: 1,
                           marginTop: -8,
                         }}
@@ -950,7 +1029,7 @@ useEffect(() => {
                       width={15}
                       height={15}
                       sx={{
-                        backgroundColor: "#6EC207",
+                        backgroundColor: "#52b202",
                         marginLeft: -12.8,
                         marginTop: -3,
                       }}
@@ -970,30 +1049,43 @@ useEffect(() => {
           </Grid>
         </Grid>
         <Grid sx={{ marginTop: 9 }}>
-          <Grid>.</Grid>
+    
         </Grid>
       </Paper>
-      <Paper sx={{ margin: 2, backgroundColor: "lightgrey" }}>
+      <Paper sx={{ margin: 2, backgroundColor: "lightgrey",marginLeft:-3,marginRight:-3, p:3}}>
         <Grid>
-          <Typography variant="h5" textAlign="center" padding={6}>
+          <Typography variant="h5" textAlign="center" marginTop={3}>
             กราฟเเสดงจำนวนเที่ยว
           </Typography>
-          <Item sx={{ margin: 5, marginTop: -2 }}>
-            <LineChart
-              width={1090}
+          <Item sx={{ margin: 5, marginTop: 2 }}>
+            <ComposedChart
+              width={1300}
               height={500}
               data={monthlyTrips}
-              margin={{ top: 50, right: 30, left: 20, bottom: 5 }}
+              margin={{ top: 50, right: 150, left: -40, bottom: 5 }}
             >
               <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="month" fontSize={13} />
+
+              <XAxis dataKey={xAxisDataKey} fontSize={12} ticks={xAxisLabels} />
               <YAxis fontSize={13} />
-              <Tooltip />
-              <Legend />
+              
+              
+
+              
+              <Area
+                type="monotone"
+                dataKey="trips"
+                stroke="#FF5733" // สีเส้น
+                fill="rgba(255, 87, 51, 0.5)" // สีพื้นที่ใต้กราฟ
+                strokeWidth={3}
+              />
+
+              
               <Line
                 type="monotone"
                 dataKey="trips"
-                stroke="#131010"
+                stroke="#FF5733" // สีแดงส้ม
+                strokeWidth={3}
                 activeDot={{ r: 10 }}
                 label={({ x, y, value }) => (
                   <text
@@ -1007,10 +1099,10 @@ useEffect(() => {
                   </text>
                 )}
               />
-            </LineChart>
+            </ComposedChart>
           </Item>
         </Grid>
-        <Typography>.</Typography>
+
       </Paper>
     </Container>
   );
