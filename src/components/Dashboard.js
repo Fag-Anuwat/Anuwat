@@ -813,7 +813,7 @@ function Dashboard() {
         </Grid>
       </Box>
 
-      <Paper sx={{ margin: 2, backgroundColor: "lightgrey" , p:3 }}>
+      <Paper sx={{ margin: 2, backgroundColor: "lightgrey", p: 3 }}>
         <Typography variant="h5" textAlign="center">
           กราฟเเสดงข้อมูลทั้งหมด
         </Typography>
@@ -1048,11 +1048,17 @@ function Dashboard() {
             </Item>
           </Grid>
         </Grid>
-        <Grid sx={{ marginTop: 9 }}>
-    
-        </Grid>
+        <Grid sx={{ marginTop: 9 }}></Grid>
       </Paper>
-      <Paper sx={{ margin: 2, backgroundColor: "lightgrey",marginLeft:-3,marginRight:-3, p:3}}>
+      <Paper
+        sx={{
+          margin: 2,
+          backgroundColor: "lightgrey",
+          marginLeft: -3,
+          marginRight: -3,
+          p: 3,
+        }}
+      >
         <Grid>
           <Typography variant="h5" textAlign="center" marginTop={3}>
             กราฟเเสดงจำนวนเที่ยว
@@ -1062,16 +1068,13 @@ function Dashboard() {
               width={1300}
               height={500}
               data={monthlyTrips}
-              margin={{ top: 50, right: 150, left: -40, bottom: 5 }}
+              margin={{ top: 50, left: -40, bottom: 5 }}
             >
               <CartesianGrid strokeDasharray="3 3" />
 
               <XAxis dataKey={xAxisDataKey} fontSize={12} ticks={xAxisLabels} />
               <YAxis fontSize={13} />
-              
-              
 
-              
               <Area
                 type="monotone"
                 dataKey="trips"
@@ -1080,7 +1083,6 @@ function Dashboard() {
                 strokeWidth={3}
               />
 
-              
               <Line
                 type="monotone"
                 dataKey="trips"
@@ -1102,7 +1104,6 @@ function Dashboard() {
             </ComposedChart>
           </Item>
         </Grid>
-
       </Paper>
     </Container>
   );

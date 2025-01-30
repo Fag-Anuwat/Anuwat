@@ -457,7 +457,7 @@ function Dashboard3(props) {
                   </Grid>
                 </Grid>
               </Grid>
-              <Paper sx={{ margin: 3, backgroundColor: "lightgrey",p:3 }}>
+              <Paper sx={{ margin: 3, backgroundColor: "lightgrey", p: 3 }}>
                 <Typography variant="h5" textAlign="center">
                   กราฟเเสดงข้อมูล
                 </Typography>
@@ -699,7 +699,6 @@ function Dashboard3(props) {
                     </Item>
                   </Grid>
                 </Grid>
-                
               </Paper>
               <Grid>.</Grid>
               {/* <Paper sx={{ margin: 2.7, backgroundColor: "lightgrey" }}>
