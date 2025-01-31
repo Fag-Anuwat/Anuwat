@@ -96,7 +96,7 @@ function Dashboard() {
   const [o_trip, setO_trip] = useState(0);
   const [xAxisLabels, setXAxisLabels] = useState([]);
   const [xAxisDataKey, setXAxisDataKey] = useState([]);
-
+  
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
 
   // ฟังก์ชันเพื่ออัพเดตขนาดหน้าจอเมื่อหน้าจอขยับ
@@ -586,11 +586,15 @@ function Dashboard() {
   return (
     <Container maxWidth="xl">
       <Box p={3}>
-        <Box sx={{ display:"flex", justifyContent: "left", alignItems:"center" , marginTop: -35, marginBottom: 17 }}>
-          <img src={Logo} alt="Logo" style={{ width: "150px" }} />
-          <Typography variant="h1" fontWeight="bold" color="red" gutterBottom >Happy Oil Group</Typography>
+        <Box sx={{ display:"flex", justifyContent: "left", alignItems:"center" , marginTop: -30, marginBottom: 4 }}>
+          <img src={Logo} alt="Logo" style={{ width: "150px" , marginLeft:-46}} />
+          <Typography variant="h3" fontWeight="bold" color="success" gutterBottom marginLeft={0} marginTop={3}>Happy</Typography>
+          
+          <Typography variant="h3" fontWeight="bold" color="warning" gutterBottom marginLeft={3} marginTop={3}>Oil</Typography>
+          
+          <Typography variant="h3" fontWeight="bold" color="red" gutterBottom marginLeft={3} marginTop={3}>Group</Typography>
         </Box>
-        <Grid container spacing={2} marginBottom={3} marginLeft={-3.6}>
+        <Grid container spacing={2} marginBottom={2} marginLeft={-3.6}>
           <Grid item xs={1.6}>
             <Paper component="form">
               <LocalizationProvider dateAdapter={AdapterDayjs}>
@@ -1078,19 +1082,19 @@ function Dashboard() {
         }}
       >
         <Grid>
-          <Typography variant="h5" textAlign="center" marginTop={3}>
+          <Typography variant="h5" textAlign="center" marginTop={2}>
             กราฟเเสดงจำนวนเที่ยว
           </Typography>
           <Item sx={{ width: "100%" }}>
             <ComposedChart
-              width={windowWidth-80}
+              width={windowWidth-100}
               height={500}
               data={monthlyTrips}
-              margin={{ top: 50, right: 40, left: -40, bottom: 5 }}
+              margin ={{ left:-20, right:30, top:60}}
             >
               <CartesianGrid strokeDasharray="3 3" />
 
-              <XAxis dataKey={xAxisDataKey} fontSize={12} ticks={xAxisLabels} />
+              <XAxis dataKey={xAxisDataKey} fontSize={13}ticks={xAxisLabels} />
               <YAxis fontSize={13} />
 
               <Area
@@ -1113,7 +1117,7 @@ function Dashboard() {
                     y={y - 10}
                     fill="black"
                     textAnchor="middle"
-                    fontSize={15}
+                    fontSize={20}
                   >
                     {value}
                   </text>
