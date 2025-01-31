@@ -96,23 +96,8 @@ function Dashboard() {
   const [o_trip, setO_trip] = useState(0);
   const [xAxisLabels, setXAxisLabels] = useState([]);
   const [xAxisDataKey, setXAxisDataKey] = useState([]);
+
   
-  const [windowWidth, setWindowWidth] = useState(window.innerWidth);
-
-  // ฟังก์ชันเพื่ออัพเดตขนาดหน้าจอเมื่อหน้าจอขยับ
-  useEffect(() => {
-    const handleResize = () => {
-      setWindowWidth(window.innerWidth);
-    };
-
-    // เพิ่ม event listener เมื่อขนาดหน้าจอเปลี่ยน
-    window.addEventListener('resize', handleResize);
-
-    // ลบ event listener เมื่อ component ถูกทำลาย
-    return () => {
-      window.removeEventListener('resize', handleResize);
-    };
-  }, []);
 
   // ดึงข้อมูลทะเบียนรถทั้งหมดจาก Firebase
   useEffect(() => {
@@ -586,13 +571,52 @@ function Dashboard() {
   return (
     <Container maxWidth="xl">
       <Box p={3}>
-        <Box sx={{ display:"flex", justifyContent: "left", alignItems:"center" , marginTop: -30, marginBottom: 4 }}>
-          <img src={Logo} alt="Logo" style={{ width: "150px" , marginLeft:-46}} />
-          <Typography variant="h3" fontWeight="bold" color="success" gutterBottom marginLeft={0} marginTop={3}>Happy</Typography>
-          
-          <Typography variant="h3" fontWeight="bold" color="warning" gutterBottom marginLeft={3} marginTop={3}>Oil</Typography>
-          
-          <Typography variant="h3" fontWeight="bold" color="red" gutterBottom marginLeft={3} marginTop={3}>Group</Typography>
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "left",
+            alignItems: "center",
+            marginTop: -30,
+            marginBottom: 4,
+          }}
+        >
+          <img
+            src={Logo}
+            alt="Logo"
+            style={{ width: "150px", marginLeft: -46 }}
+          />
+          <Typography
+            variant="h3"
+            fontWeight="bold"
+            color="success"
+            gutterBottom
+            marginLeft={0}
+            marginTop={3}
+          >
+            Happy
+          </Typography>
+
+          <Typography
+            variant="h3"
+            fontWeight="bold"
+            color="warning"
+            gutterBottom
+            marginLeft={3}
+            marginTop={3}
+          >
+            Oil
+          </Typography>
+
+          <Typography
+            variant="h3"
+            fontWeight="bold"
+            color="red"
+            gutterBottom
+            marginLeft={3}
+            marginTop={3}
+          >
+            Group
+          </Typography>
         </Box>
         <Grid container spacing={2} marginBottom={2} marginLeft={-3.6}>
           <Grid item xs={1.6}>
@@ -1072,58 +1096,80 @@ function Dashboard() {
         </Grid>
         <Grid sx={{ marginTop: 9 }}></Grid>
       </Paper>
+
       <Paper
         sx={{
           margin: 2,
           backgroundColor: "lightgrey",
-          marginLeft: -3,
-          marginRight: -3,
-          p: 3,
+          padding: 3,
+          display: "flex", // ✅ จัดให้อยู่ตรงกลาง
+          justifyContent: "center", // ✅ ไม่ให้ขยับ
+          alignItems: "center",
+          overflow: "hidden", // ✅ ป้องกันล้น
+          position: "relative", // ✅ ล็อกตำแหน่ง
         }}
       >
-        <Grid>
+        <Grid container justifyContent="center">
           <Typography variant="h5" textAlign="center" marginTop={2}>
-            กราฟเเสดงจำนวนเที่ยว
+            กราฟแสดงจำนวนเที่ยว
           </Typography>
-          <Item sx={{ width: "100%" }}>
-            <ComposedChart
-              width={windowWidth-100}
-              height={500}
-              data={monthlyTrips}
-              margin ={{ left:-20, right:30, top:60}}
+          <Item
+          sx={{
+            width: "100%",
+            maxWidth: "1200px", // ✅ ไม่ให้เกิน 1250px
+            overflow: "hidden", // ✅ ป้องกันล้น
+            position: "relative", // ✅ ป้องกันการขยับ
+            justifyContent: "center", // ✅ จัดให้อยู่ตรงกลาง
+          }}
+          >
+            <Box
+              // sx={{
+              //   width: "100%",
+              //   maxWidth: "1200px", // ✅ ขนาดคงที่
+              //   overflow: "hidden", // ✅ ป้องกันทะลุ
+              //   position: "relative",
+              // }}
             >
-              <CartesianGrid strokeDasharray="3 3" />
-
-              <XAxis dataKey={xAxisDataKey} fontSize={13}ticks={xAxisLabels} />
-              <YAxis fontSize={13} />
-
-              <Area
-                type="monotone"
-                dataKey="trips"
-                stroke="#FF5733" // สีเส้น
-                fill="rgba(255, 87, 51, 0.5)" // สีพื้นที่ใต้กราฟ
-                strokeWidth={3}
-              />
-
-              <Line
-                type="monotone"
-                dataKey="trips"
-                stroke="#FF5733" // สีแดงส้ม
-                strokeWidth={3}
-                activeDot={{ r: 10 }}
-                label={({ x, y, value }) => (
-                  <text
-                    x={x}
-                    y={y - 10}
-                    fill="black"
-                    textAnchor="middle"
-                    fontSize={20}
-                  >
-                    {value}
-                  </text>
-                )}
-              />
-            </ComposedChart>
+              <ComposedChart
+                width={1170} // ✅ ขนาดตายตัว
+                height={500}
+                data={monthlyTrips}
+                margin={{ left: -20, right: 30, top: 60 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis
+                  dataKey={xAxisDataKey}
+                  fontSize={15}
+                  ticks={xAxisLabels}
+                />
+                <YAxis fontSize={13} />
+                <Area
+                  type="monotone"
+                  dataKey="trips"
+                  stroke="#FF5733"
+                  fill="rgba(255, 87, 51, 0.5)"
+                  strokeWidth={3}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="trips"
+                  stroke="#FF5733"
+                  strokeWidth={3}
+                  activeDot={{ r: 10 }}
+                  label={({ x, y, value }) => (
+                    <text
+                      x={x}
+                      y={y - 10}
+                      fill="black"
+                      textAnchor="middle"
+                      fontSize={20}
+                    >
+                      {value}
+                    </text>
+                  )}
+                />
+              </ComposedChart>
+            </Box>
           </Item>
         </Grid>
       </Paper>
