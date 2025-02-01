@@ -84,7 +84,6 @@ function Dashboard() {
   const [selectedVehicle, setSelectedVehicle] = useState("");
   const [sumVolume, setSumVolume] = useState(0);
   const [customer, setCustomer] = useState(0);
-  const [addressCount, setAddressCount] = useState(0); // จำนวนจุดส่งสินค้า
   // const [plates, setPlates] = useState([]);
   // const [selectedPlate, setSelectedPlate] = useState("");
   const [monthlyTrips, setMonthlyTrips] = useState([]);
@@ -171,7 +170,6 @@ function Dashboard() {
       const dataOrderT = [];
       const dataOrderC = [];
       const uniqueCustomers = new Set();
-      const uniqueAddresses = new Set();
 
       for (let id in datas) {
         const orderDate = dayjs(datas[id].date, "DD/MM/YYYY");
@@ -180,29 +178,24 @@ function Dashboard() {
           (vehicle === "" || datas[id].truck.split(":")[1] === vehicle)
         ) {
           if (datas[id].orderstatus === "นำส่งสำเร็จ") {
+            if (datas[id].customer) uniqueCustomers.add(datas[id].customer);
             dataOrder.push({ id, ...datas[id] });
           } else if (datas[id].orderstatus === "รอจัดขึ้นรถ") {
             dataOrderT.push({ id, ...datas[id] });
           } else {
             dataOrderC.push({ id, ...datas[id] });
           }
-
-          // เก็บลูกค้าและที่อยู่
-          if (datas[id].customer) uniqueCustomers.add(datas[id].customer);
-          if (datas[id].address) uniqueAddresses.add(datas[id].address);
         }
       }
 
-      console.log("นำส่งสำเร็จ", dataOrder.length);
-      console.log("รอจัดขึ้นรถ", dataOrderT.length);
-      console.log("ยกเลิก", dataOrderC.length);
+      
+
 
       setWait(dataOrderT.length);
       setCancel(dataOrderC.length);
       setSucceed(dataOrder.length);
       setOrder(dataOrder.length);
       setCustomer(uniqueCustomers.size);
-      setAddressCount(uniqueAddresses.size);
     });
   };
 
@@ -782,7 +775,7 @@ function Dashboard() {
                   fontSize: 35,
                 }}
               >
-                {customer.toLocaleString()}
+                {customer}
               </Typography>
             </Item>
           </Grid>
@@ -852,7 +845,7 @@ function Dashboard() {
                   fontSize: 50,
                 }}
               >
-                {addressCount}
+                {customer}
               </Typography>
             </Item>
           </Grid>
@@ -966,7 +959,7 @@ function Dashboard() {
                 ]}
                 series={[
                   {
-                    data: [trips, customer, addressCount],
+                    data: [trips, customer, customer],
                     stack: "A",
                     color: "#009688",
                   },

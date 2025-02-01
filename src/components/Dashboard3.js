@@ -22,7 +22,6 @@ import { getDatabase, ref, onValue } from "firebase/database";
 //   Legend,
 // } from "recharts";
 import { database } from "./server/firebase";
-import { Cancel } from "@mui/icons-material";
 
 const Item = styled(Paper)(({ theme }) => ({
   backgroundColor: "#fff",
